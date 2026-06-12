@@ -1,6 +1,7 @@
 import { type MealLog } from "./meals.functions";
 import { type HabitState } from "./smart-health-nudge";
 import { reviewRecentMealPatternSafety, normalizeHealthConcerns, sanitizeClinicalSafetyText } from "./clinical-nutrition-safety";
+import { type HealthSignal, generateCareCompanionSignalQuestions } from "./health-signals";
 
 export type CareCompanionDataSource =
   | "real_meal_logs"
@@ -228,7 +229,8 @@ export function generateCareCompanionSummary(
   profile: any,
   meals: MealLog[],
   habitState: HabitState | null,
-  isDemo: boolean
+  isDemo: boolean,
+  healthSignals?: HealthSignal[]
 ): CareCompanionSummary {
   const dataSources: CareCompanionDataSource[] = [];
   if (isDemo) dataSources.push("demo_fallback");
@@ -304,6 +306,25 @@ export function generateCareCompanionSummary(
     questionsToAsk.push({
       ...HABIT_QUESTION,
       confidence: "high"
+    });
+  }
+
+  // Health Signals Integration
+  if (healthSignals) {
+    const signalQuestions = generateCareCompanionSignalQuestions(healthSignals);
+    signalQuestions.forEach((q, index) => {
+      questionsToAsk.push({
+        id: `health_signal_${index}`,
+        question: q,
+        category: "general",
+        whyThisMatters: "Health signals provide supporting context for your overall wellbeing.",
+        basedOn: ["Connected health signals"],
+        safeAnswer: "This signal trend is meant for discussion with your provider, to see how it aligns with your nutrition.",
+        bangladeshiFoodExamples: [],
+        whatToTrackNext: ["Continue monitoring health signals"],
+        doctorDiscussionPrompt: q,
+        confidence: "medium"
+      });
     });
   }
 

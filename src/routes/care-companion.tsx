@@ -7,6 +7,7 @@ import { listRecentMeals, type MealLog } from "@/lib/meals.functions";
 import { isDemoSession, demoProfile, getDemoMeals } from "@/lib/demo-session";
 import { getHabitState } from "@/lib/smart-health-nudge";
 import { generateCareCompanionSummary, type CareCompanionSummary, type CareCompanionQuestion } from "@/lib/care-companion";
+import { getStoredHealthSignals, getDemoHealthSignals } from "@/lib/health-signals";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -221,11 +222,13 @@ function CareCompanionPage() {
 
   const summary = useMemo(() => {
     if (!profileQ.data || !mealsQ.data) return null;
+    const healthSignals = demo ? getDemoHealthSignals() : getStoredHealthSignals();
     return generateCareCompanionSummary(
       profileQ.data,
       mealsQ.data,
       habitState,
-      demo
+      demo,
+      healthSignals
     );
   }, [profileQ.data, mealsQ.data, habitState, demo]);
 

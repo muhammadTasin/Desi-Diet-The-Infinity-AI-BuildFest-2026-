@@ -177,7 +177,8 @@ High-risk meals: ${data.highRiskCount ?? 0}`;
       .join("\n") + "\n";
   }
 
-  const footer = `Note: These are estimated nutrition values for general guidance only, not medical advice.`;
+  const footer = `Note: These are estimated nutrition values for general guidance only, not medical advice.
+Data sources: meals from user-submitted logs/scans; health signals from manual/demo/future connector.`;
 
   return `${header}
 

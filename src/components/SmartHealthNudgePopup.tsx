@@ -4,6 +4,7 @@ import { getSmartHealthNudgeFn } from "@/lib/smart-health-nudge.functions";
 import { Button } from "@/components/ui/button";
 import { X, Info, Utensils, Droplets, Egg, Fish, ArrowRight, Calendar, Sparkles, Globe, Heart, ShieldCheck, ChevronRight, Copy, MessageSquare } from "lucide-react";
 import { type MealLog } from "@/lib/meals.functions";
+import { type HealthSignal } from "@/lib/health-signals";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
@@ -16,6 +17,7 @@ interface SmartHealthNudgePopupProps {
   profile: any;
   recentMeals: MealLog[];
   isDemo?: boolean;
+  healthSignals?: HealthSignal[];
 }
 
 const FALLBACK_ICONS: Record<string, React.ReactNode> = {
@@ -40,7 +42,7 @@ const PLAN_FALLBACK_ICONS: Record<string, React.ReactNode> = {
   "generic": <Info className="h-6 w-6 text-primary" />,
 };
 
-export function SmartHealthNudgePopup({ profile, recentMeals, isDemo = false }: SmartHealthNudgePopupProps) {
+export function SmartHealthNudgePopup({ profile, recentMeals, isDemo = false, healthSignals }: SmartHealthNudgePopupProps) {
   const fetchNudge = useServerFn(getSmartHealthNudgeFn);
   
   const [localNudge, setLocalNudge] = useState<SmartHealthNudge | null>(null);
@@ -51,12 +53,12 @@ export function SmartHealthNudgePopup({ profile, recentMeals, isDemo = false }: 
 
   // 1. Instantly show local deterministic nudge
   useEffect(() => {
-    const generated = generateSmartNudge(profile, recentMeals, isDemo);
+    const generated = generateSmartNudge(profile, recentMeals, isDemo, healthSignals);
     if (generated && shouldShowNudge(generated.id)) {
       setLocalNudge(generated);
       setIsVisible(true);
     }
-  }, [profile, recentMeals, isDemo]);
+  }, [profile, recentMeals, isDemo, healthSignals]);
 
   // 2. Fetch AI nudge in background
   const { data: aiNudge } = useQuery({

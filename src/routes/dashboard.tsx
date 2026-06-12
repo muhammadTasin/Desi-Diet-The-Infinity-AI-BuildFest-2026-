@@ -17,16 +17,26 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import {
   Sprout,
-  Camera,
-  Sparkles,
-  MessageCircle,
-  Flame,
-  Droplets,
-  Award,
+  FileText,
   LogOut,
+  Camera,
+  Activity,
+  AlertCircle,
+  TrendingUp,
+  Award,
+  CalendarCheck,
+  Flame,
+  MessageSquare,
+  ShieldAlert,
+  Droplets,
   Settings,
   Heart,
   Trash2,
+  Share2,
+  Sparkles,
+  MessageCircle,
+  ShieldCheck,
+  Info,
   AlertTriangle,
   RefreshCw,
   Printer,
@@ -41,7 +51,7 @@ import {
   buildWhatsAppShareUrl,
 } from "@/lib/share-summary";
 import { reviewRecentMealPatternSafety, normalizeHealthConcerns, sanitizeClinicalSafetyText } from "@/lib/clinical-nutrition-safety";
-import { ShieldCheck, Info } from "lucide-react";
+
 import { cn } from "@/lib/utils";
 
 import { PlateAnalyzer } from "@/components/PlateAnalyzer";
@@ -64,6 +74,16 @@ import {
   YAxis,
   CartesianGrid,
 } from "recharts";
+import { getStoredHealthSignals, getDemoHealthSignals, summarizeHealthSignals, type HealthSignal } from "@/lib/health-signals";
+import { DataSourceBadge } from "@/components/DataSourceBadge";
+import { ManualHealthSignalModal } from "@/components/ManualHealthSignalModal";
+import { getConnectorPrivacyText, getMealDataSourceExplanation } from "@/lib/iot-connectors";
+import { lazy, Suspense } from "react";
+import { ClientOnly } from "@tanstack/react-router";
+
+const ConnectHealthDeviceModal = lazy(() => 
+  import("@/components/ConnectHealthDeviceModal").then(m => ({ default: m.ConnectHealthDeviceModal }))
+);
 import nanumoniAvatar from "@/assets/nanumoni-avatar.jpg";
 import logoMark from "@/assets/logo-mark.png";
 import { NavbarProfile } from "@/components/NavbarProfile";
@@ -205,6 +225,21 @@ function Dashboard() {
   const [isExporting, setIsExporting] = useState(false);
   const [activePopup, setActivePopup] = useState<"none" | "summary" | "checkin" | "nudge">("none");
   const [pendingDay, setPendingDay] = useState<HabitDay | null>(null);
+  const [healthSignals, setHealthSignals] = useState<HealthSignal[]>([]);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (mounted) {
+      setHealthSignals(demo ? getDemoHealthSignals() : getStoredHealthSignals());
+    }
+  }, [mounted, demo]);
+
+  const handleManualSignalSaved = () => {
+    setHealthSignals(getStoredHealthSignals());
+  };
 
   function handleExport() {
     setIsExporting(true);
@@ -663,10 +698,62 @@ function Dashboard() {
            <RawFoodBasketBridge basketId="balanced-deshi" isDemo={demo} />
         </section>
 
+        {/* ── Connected Health Signals ── */}
+        <section className="rounded-3xl border border-border bg-card p-5 shadow-soft">
+          <div className="mb-3">
+            <h3 className="font-display text-base font-semibold">Connected Health Signals</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">Optional signals that can support meal-based insights.</p>
+          </div>
+          
+          <div className="bg-primary/5 rounded-2xl p-4 mb-4 border border-primary/10">
+            <p className="text-xs font-medium text-foreground/80 mb-2">{getMealDataSourceExplanation()}</p>
+            <p className="text-xs text-muted-foreground">{getConnectorPrivacyText()}</p>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+            {healthSignals.length > 0 ? (
+              healthSignals.map((signal, idx) => (
+                <div key={idx} className="bg-secondary/50 rounded-xl p-3 border border-border/50">
+                  <span className="block text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-1">{signal.kind.replace("_", " ")}</span>
+                  <span className="block text-lg font-bold text-foreground">{signal.value} <span className="text-xs font-normal text-muted-foreground">{signal.unit}</span></span>
+                  <DataSourceBadge source={signal.source as any} className="mt-2 text-[8px] py-0 border-none px-0" />
+                </div>
+              ))
+            ) : (
+              <div className="col-span-full py-4 text-center">
+                <p className="text-sm text-muted-foreground mb-3">{summarizeHealthSignals([], demo).summary}</p>
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {!demo && (
+              <>
+                <ClientOnly fallback={null}>
+                  {() => (
+                    <Suspense fallback={null}>
+                      <ConnectHealthDeviceModal onSaved={handleManualSignalSaved} />
+                    </Suspense>
+                  )}
+                </ClientOnly>
+                <ManualHealthSignalModal onSaved={handleManualSignalSaved} />
+              </>
+            )}
+            {demo && (
+              <Button variant="outline" size="sm" onClick={() => setHealthSignals(getDemoHealthSignals())}>
+                <Activity className="mr-2 h-4 w-4" /> Use demo wearable sample
+              </Button>
+            )}
+          </div>
+        </section>
+
         {/* ── Today's meals ── */}
         <section className="rounded-3xl border border-border bg-card p-5 shadow-soft">
-          <div className="mb-3 flex items-center justify-between">
-            <h3 className="font-display text-base font-semibold">Today's meals</h3>
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <h3 className="font-display text-base font-semibold">Today's meals</h3>
+              <p className="text-xs text-muted-foreground mt-0.5">Logged sources timeline</p>
+            </div>
             <span className="text-xs text-muted-foreground">{todays.length} logged</span>
           </div>
           {todays.length === 0 ? (
@@ -707,6 +794,9 @@ function Dashboard() {
                       sodium_mg: m.sodium_mg ?? 0,
                     }}
                   />
+                  <div className="mt-2 flex">
+                    <DataSourceBadge source={demo ? "demo_sample" : m.source === "photo" as any ? "photo_scan" : m.source === "recommendation" ? "chat_confirmed" : "manual_log"} />
+                  </div>
                   <button
                     aria-label="Delete meal"
                     onClick={() => handleDeleteMeal(m.id)}
@@ -751,7 +841,7 @@ function Dashboard() {
       
       {activePopup === "summary" && <NanumoniHabitSummary onClose={handleSummaryClose} />}
       {activePopup === "checkin" && pendingDay && <NanumoniHabitCheckIn pendingDay={pendingDay} onComplete={handleCheckInComplete} />}
-      {activePopup === "nudge" && p && <SmartHealthNudgePopup profile={p} recentMeals={Array.isArray(meals) ? meals : []} isDemo={demo} />}
+      {activePopup === "nudge" && p && <SmartHealthNudgePopup profile={p} recentMeals={Array.isArray(meals) ? meals : []} isDemo={demo} healthSignals={healthSignals} />}
     </div>
   );
 }

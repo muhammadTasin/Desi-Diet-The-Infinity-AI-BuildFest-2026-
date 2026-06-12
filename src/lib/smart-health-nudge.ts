@@ -1,4 +1,5 @@
 import { type MealLog } from "./meals.functions";
+import { type HealthSignal } from "./health-signals";
 
 export const SMART_NUDGE_IMAGE_KINDS = [
   // Leafy greens
@@ -598,7 +599,8 @@ export function enrichNudgeWithPlanAndDetails(nudge: SmartHealthNudge): SmartHea
 export function generateSmartNudge(
   profile: any,
   recentMeals: MealLog[],
-  isDemo: boolean = false
+  isDemo: boolean = false,
+  healthSignals?: HealthSignal[]
 ): SmartHealthNudge | null {
   const disclaimerBn = "General nutrition guidance — not medical advice. Doctor er poramorsho nin.";
   const disclaimerEn = "General nutrition guidance — not medical advice. Consult a professional.";
@@ -652,6 +654,18 @@ export function generateSmartNudge(
       totalWater += (m.water_ml || 0);
     });
 
+    let waterSignal = 0;
+    let stepsSignal = 0;
+    let sleepSignal = 0;
+    
+    if (healthSignals) {
+       healthSignals.forEach(s => {
+         if (s.kind === "water_glasses") waterSignal += Number(s.value);
+         if (s.kind === "steps") stepsSignal += Number(s.value);
+         if (s.kind === "sleep_hours") sleepSignal += Number(s.value);
+       });
+    }
+
     // Example A: Low fiber pattern (if logged some meals but fiber is very low)
     if (todaysMeals.length >= 1 && totalFiber < 10) {
       rawNudge = {
@@ -701,27 +715,75 @@ export function generateSmartNudge(
       };
     }
     // Example B: Generic hydration/fiber reminder if we haven't hit others
-    else if (todaysMeals.length >= 2 && totalWater < 1000) {
+    else if (todaysMeals.length >= 2 && (totalWater < 1000 || (healthSignals && waterSignal > 0 && waterSignal < 6))) {
       rawNudge = {
         id: "nudge-hydration-fiber",
         titleBn: "Pani + fiber reminder",
         titleEn: "Water + fiber reminder",
-        messageBn: "Apnar profile/meal pattern theke mone hocche, pani and fiber beshi khele digestion support hobe. Ajke pani intake ektu socheton thakun.",
-        messageEn: "Based on your pattern, more water and fiber can support your health. Be mindful of your water intake today.",
+        messageBn: "Apnar profile/meal pattern ba signals theke mone hocche, pani and fiber beshi khele digestion support hobe. Ajke pani intake ektu socheton thakun.",
+        messageEn: "Based on your pattern or signals, more water and fiber can support your health. Be mindful of your water intake today.",
         benefitBn: "Hydration and fiber bowel movement support korte pare.",
         benefitEn: "Hydration and fiber support regular bowel movements.",
         actionLabelBn: "Pani pan korun",
         actionLabelEn: "Drink some water",
         imageKind: "water",
         priority: "medium",
-        reasonBn: "Pani intake ektu kom chilo kisu meal e.",
-        reasonEn: "Water intake was slightly low recently.",
+        reasonBn: "Pani intake ba connected signal e pani kom mone hocche.",
+        reasonEn: "Water intake or signal was low recently.",
         disclaimerBn,
         disclaimerEn,
         checkInQuestionBn: "Dadu bhai, kalke pani intake ektu barate perecho?",
         checkInQuestionEn: "Did you drink more water yesterday?",
         exerciseSuggestionBn: "10 minute brisk walk try korun.",
         exerciseSuggestionEn: "Try a 10-minute brisk walk today."
+      };
+    }
+    // IoT Signal: Low steps + high calorie
+    else if (todaysMeals.length >= 1 && healthSignals && stepsSignal > 0 && stepsSignal < 5000 && totalCalories > 800) {
+      rawNudge = {
+        id: "nudge-iot-steps",
+        titleBn: "Ektu hete ashun",
+        titleEn: "Take a short walk",
+        messageBn: "Health signals theke dekha jacche apnar activity kom. Ektu hatle ba active thakle calorie burn e helpful hobe.",
+        messageEn: "Your connected signals show low activity today. Taking a short walk can help balance your meals.",
+        benefitBn: "Walking digestion and metabolism enhance kore.",
+        benefitEn: "Walking enhances digestion and metabolism.",
+        actionLabelBn: "Walking suggestion dekhun",
+        actionLabelEn: "View activity suggestion",
+        imageKind: "generic",
+        priority: "medium",
+        reasonBn: "Steps count kom chilo but meal calories beshi.",
+        reasonEn: "Steps count was low while meal calories were high.",
+        disclaimerBn,
+        disclaimerEn,
+        checkInQuestionBn: "Dadu bhai, kalke ki ektu hetecho?",
+        checkInQuestionEn: "Did you manage to walk yesterday?",
+        exerciseSuggestionBn: "Khabar por 15 minute hatun.",
+        exerciseSuggestionEn: "Walk for 15 minutes after eating."
+      };
+    }
+    // IoT Signal: Low sleep
+    else if (healthSignals && sleepSignal > 0 && sleepSignal < 6) {
+      rawNudge = {
+        id: "nudge-iot-sleep",
+        titleBn: "Ghum ba sleep ektu barate paren",
+        titleEn: "Consider more sleep",
+        messageBn: "Health signals onujayi apnar ghum kom hoyeche. Ghum kom hole khudar probonota barde pare, ektu fiber rich meal khan.",
+        messageEn: "Your health signals indicate low sleep. Lack of sleep can increase hunger, so opt for fiber-rich meals to stay full.",
+        benefitBn: "Adequate sleep prevents overeating.",
+        benefitEn: "Adequate sleep prevents overeating.",
+        actionLabelBn: "Sleep support tips",
+        actionLabelEn: "Sleep support tips",
+        imageKind: "water",
+        priority: "medium",
+        reasonBn: "Connected sleep signal shows less than 6 hours.",
+        reasonEn: "Connected sleep signal shows less than 6 hours.",
+        disclaimerBn,
+        disclaimerEn,
+        checkInQuestionBn: "Dadu bhai, kalke ki ektu beshi ghumate perecho?",
+        checkInQuestionEn: "Did you manage to sleep more yesterday?",
+        exerciseSuggestionBn: "Shobar age halka stretching korun.",
+        exerciseSuggestionEn: "Do light stretching before sleeping."
       };
     }
     // Default / Empty State
