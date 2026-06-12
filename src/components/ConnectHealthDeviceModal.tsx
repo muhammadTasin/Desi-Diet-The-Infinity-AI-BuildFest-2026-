@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { addStoredHealthSignal, type HealthSignal } from "@/lib/health-signals";
 import { getAvailableIoTConnectors } from "@/lib/iot-connectors";
 import { DataSourceBadge } from "@/components/DataSourceBadge";
+import { trackActivityEvent } from "@/lib/activity-tracking";
 
 export function ConnectHealthDeviceModal({ onSaved }: { onSaved?: () => void }) {
   const [open, setOpen] = useState(false);
@@ -43,6 +44,12 @@ export function ConnectHealthDeviceModal({ onSaved }: { onSaved?: () => void }) 
   const handleConnectBluetooth = async () => {
     try {
       setBtConnecting(true);
+      trackActivityEvent({
+        eventName: "device_connect_clicked",
+        page: "dashboard",
+        feature: "health_signals",
+        metadata: { connector: "bluetooth" }
+      });
       const { requestBluetoothHealthDevice, parseBluetoothHealthSignal } = await import("@/lib/bluetooth-health-device.client");
       const device = await requestBluetoothHealthDevice();
       setBtDevice(device);
@@ -82,6 +89,12 @@ export function ConnectHealthDeviceModal({ onSaved }: { onSaved?: () => void }) 
     }
     setWifiError("");
     setWifiTesting(true);
+    trackActivityEvent({
+      eventName: "device_connect_clicked",
+      page: "dashboard",
+      feature: "health_signals",
+      metadata: { connector: "wifi_endpoint" }
+    });
     try {
       const raw = await fetchHealthSignalsFromEndpoint(wifiUrl);
       const signals = normalizeEndpointSignals(raw, wifiUrl);

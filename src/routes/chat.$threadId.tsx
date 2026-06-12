@@ -24,6 +24,7 @@ import nanumoniAvatar from "@/assets/nanumoni-avatar.jpg";
 import { toast } from "sonner";
 import { detectFoodShoppingIntent, extractFoodSearchTerm } from "@/lib/food-location-intent";
 import { FoodNearbySearchCard } from "@/components/FoodNearbySearchCard";
+import { trackActivityEvent } from "@/lib/activity-tracking";
 
 export const Route = createFileRoute("/chat/$threadId")({
   beforeLoad: async () => {
@@ -106,6 +107,11 @@ function ChatInner({ threadId, initialMessages }: { threadId: string; initialMes
   async function submit(text: string) {
     const trimmed = text.trim();
     if (!trimmed || isBusy) return;
+    trackActivityEvent({
+      eventName: "chat_message_sent",
+      page: "chat",
+      feature: "chat"
+    });
     setInput("");
     setStatus("submitted");
     const optimistic: ChatMessage = {

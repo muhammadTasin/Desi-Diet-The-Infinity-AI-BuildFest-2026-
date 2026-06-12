@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 import { isDemoSession, endDemoSession } from "@/lib/demo-session";
+import { trackActivityEvent } from "@/lib/activity-tracking";
 
 export const Route = createFileRoute("/chat")({
   beforeLoad: async () => {
@@ -55,6 +56,10 @@ function ChatLayout() {
 
   const demo = isDemoSession();
   const [demoThreads, setDemoThreads] = useState<{ id: string; title: string; updated_at: string }[]>([]);
+
+  useEffect(() => {
+    trackActivityEvent({ eventName: "chat_opened", page: "chat" });
+  }, []);
 
   useEffect(() => {
     if (demo) {

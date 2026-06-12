@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { isDemoSession, startDemoSession } from "@/lib/demo-session";
+import { trackActivityEvent } from "@/lib/activity-tracking";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +23,10 @@ function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    trackActivityEvent({ eventName: "login_page_viewed", page: "login" });
+  }, []);
+
+  useEffect(() => {
     // removed isDemoSession redirect so demo users can log in
 
     supabase.auth.getSession().then(({ data }) => {
@@ -34,6 +39,7 @@ function LoginPage() {
     setLoading(true);
     try {
       if (mode === "signup") {
+        trackActivityEvent({ eventName: "signup_started", page: "login", feature: "auth" });
         const { error } = await supabase.auth.signUp({
           email,
           password,
@@ -45,6 +51,7 @@ function LoginPage() {
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        trackActivityEvent({ eventName: "login_success", page: "login", feature: "auth" });
         navigate({ to: "/dashboard" });
       }
     } catch (err) {
@@ -56,6 +63,12 @@ function LoginPage() {
 
   function continueAsGuest() {
     startDemoSession();
+    trackActivityEvent({
+      eventName: "guest_mode_started",
+      page: "login",
+      feature: "guest_mode",
+      metadata: { source: "judge_demo", button: "guest_mode" }
+    });
     toast.success("Guest mode started.");
     navigate({ to: "/dashboard" });
   }

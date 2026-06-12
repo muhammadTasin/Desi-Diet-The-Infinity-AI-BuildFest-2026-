@@ -42,6 +42,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { buildWhatsAppShareUrl, copyShareSummary } from "@/lib/share-summary";
 import logoMark from "@/assets/logo-mark.png";
+import { trackActivityEvent } from "@/lib/activity-tracking";
 
 export const Route = createFileRoute("/care-companion")({
   head: () => ({
@@ -195,6 +196,7 @@ function CareCompanionPage() {
 
   useEffect(() => {
     setMounted(true);
+    trackActivityEvent({ eventName: "care_companion_opened", page: "care_companion" });
   }, []);
 
   const profileQ = useQuery({

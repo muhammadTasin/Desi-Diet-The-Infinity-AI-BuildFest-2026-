@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { logMeal, type MealLog } from "@/lib/meals.functions";
 import { addDemoMeal } from "@/lib/demo-session";
+import { trackActivityEvent } from "@/lib/activity-tracking";
 import { estimateNutritionFromText } from "@/lib/bangladeshi-food-knowledge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -71,6 +72,16 @@ export function LogMealDialog({ demo = false, onDemoMealLogged }: LogMealDialogP
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<LogMealForm>(INITIAL_FORM);
 
+  useEffect(() => {
+    if (open) {
+      trackActivityEvent({
+        eventName: "manual_meal_opened",
+        page: "dashboard",
+        feature: "manual_meal"
+      });
+    }
+  }, [open]);
+
   const mut = useMutation({
     mutationFn: async () => {
       const parsedName = form.name.trim() || "Meal";
@@ -109,6 +120,11 @@ export function LogMealDialog({ demo = false, onDemoMealLogged }: LogMealDialogP
       return log({ data: meal });
     },
     onSuccess: (meal) => {
+      trackActivityEvent({
+        eventName: "manual_meal_saved",
+        page: "dashboard",
+        feature: "manual_meal"
+      });
       if (demo) onDemoMealLogged?.(meal);
       else qc.invalidateQueries({ queryKey: ["meals"] });
       toast.success("Logged ✓");

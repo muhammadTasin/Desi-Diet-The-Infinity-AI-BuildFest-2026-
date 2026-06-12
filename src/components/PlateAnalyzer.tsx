@@ -43,6 +43,7 @@ import { fileToDownscaledDataUrl, MAX_BYTES } from "@/lib/plate/image-utils";
 import { uploadPlatePhotoToSupabase } from "@/lib/plate/plate-upload";
 import { PlateAnalysisResult } from "@/components/plate/PlateAnalysisResult";
 import { NanumoniTroubleCard } from "@/components/plate/NanumoniTroubleCard";
+import { trackActivityEvent } from "@/lib/activity-tracking";
 
 
 type Props = {
@@ -126,6 +127,16 @@ export function PlateAnalyzer({ trigger, userContext }: Props) {
   const [itemsText, setItemsText] = useState("");
 
   useEffect(() => {
+    if (open) {
+      trackActivityEvent({
+        eventName: "plate_analyzer_opened",
+        page: "dashboard",
+        feature: "plate_analyzer"
+      });
+    }
+  }, [open]);
+
+  useEffect(() => {
     if (analysis && !confirmedItems) {
       setItemsText(analysis.dishes.map(d => d.name).join(", "));
     }
@@ -137,6 +148,13 @@ export function PlateAnalyzer({ trigger, userContext }: Props) {
   const demo = isDemoSession();
 
   const mutation = useMutation({
+    onMutate: () => {
+      trackActivityEvent({
+        eventName: "plate_analysis_started",
+        page: "dashboard",
+        feature: "plate_analyzer"
+      });
+    },
     mutationFn: async (payload: { dataUrl?: string; typedMeal?: string; demoSample?: string }) => {
       if (demo) {
         const sample = payload.demoSample || payload.typedMeal || "Rice, dal, fish";
@@ -158,7 +176,14 @@ export function PlateAnalyzer({ trigger, userContext }: Props) {
       if (payload.demoSample) return analyze({ data: { demoSample: payload.demoSample, userContext } });
       throw new Error("No input provided");
     },
-    onSuccess: (res) => setAnalysis(res),
+    onSuccess: (res) => {
+      trackActivityEvent({
+        eventName: "plate_analysis_completed",
+        page: "dashboard",
+        feature: "plate_analyzer"
+      });
+      setAnalysis(res);
+    },
     onError: (e) => toast.error(getPlateAnalysisErrorMessage(e)),
   });
 

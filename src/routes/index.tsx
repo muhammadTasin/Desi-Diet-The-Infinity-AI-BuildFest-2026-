@@ -9,6 +9,7 @@ import { VideoBackground } from "@/components/VideoBackground";
 import { NavbarProfile } from "@/components/NavbarProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { isDemoSession, startDemoSession } from "@/lib/demo-session";
+import { trackActivityEvent } from "@/lib/activity-tracking";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -60,6 +61,12 @@ function Landing() {
 
   function handleStartDemo() {
     startDemoSession();
+    trackActivityEvent({
+      eventName: "guest_mode_started",
+      page: "landing",
+      feature: "guest_mode",
+      metadata: { source: "judge_demo", button: "landing_try_demo" }
+    });
     toast.success("Demo mode started!");
     navigate({ to: "/dashboard" });
   }

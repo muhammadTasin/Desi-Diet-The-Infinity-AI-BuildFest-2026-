@@ -80,6 +80,7 @@ import { ManualHealthSignalModal } from "@/components/ManualHealthSignalModal";
 import { getConnectorPrivacyText, getMealDataSourceExplanation } from "@/lib/iot-connectors";
 import { lazy, Suspense } from "react";
 import { ClientOnly } from "@tanstack/react-router";
+import { trackActivityEvent } from "@/lib/activity-tracking";
 
 const ConnectHealthDeviceModal = lazy(() => 
   import("@/components/ConnectHealthDeviceModal").then(m => ({ default: m.ConnectHealthDeviceModal }))
@@ -226,9 +227,28 @@ function Dashboard() {
   const [activePopup, setActivePopup] = useState<"none" | "summary" | "checkin" | "nudge">("none");
   const [pendingDay, setPendingDay] = useState<HabitDay | null>(null);
   const [healthSignals, setHealthSignals] = useState<HealthSignal[]>([]);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     setMounted(true);
+    trackActivityEvent({ eventName: "dashboard_viewed", page: "dashboard" });
+    trackActivityEvent({ eventName: "iot_panel_viewed", page: "dashboard", feature: "health_signals" });
+    
+    if (!demo) {
+      supabase.auth.getSession().then(({ data }) => {
+        const email = data.session?.user?.email;
+        if (email) {
+          const allowedEmails = (
+            import.meta.env.VITE_ADMIN_EMAILS || "admin@deshidigest.com,tasin@deshidigest.com"
+          )
+            .split(",")
+            .map((e: string) => e.trim().toLowerCase());
+          if (allowedEmails.includes(email.toLowerCase())) {
+            setIsAdmin(true);
+          }
+        }
+      });
+    }
   }, []);
 
   useEffect(() => {
@@ -491,6 +511,13 @@ function Dashboard() {
             <Link to="/profile">
               <Button variant="ghost" size="sm"><Settings className="h-4 w-4" /></Button>
             </Link>
+            {isAdmin && (
+              <Link to="/admin/activity">
+                <Button variant="ghost" size="sm" className="text-destructive font-semibold hover:text-destructive hover:bg-destructive/10">
+                  <Activity className="h-4 w-4 mr-1" /> Admin
+                </Button>
+              </Link>
+            )}
             <NavbarProfile />
             <Button variant="ghost" size="sm" onClick={signOut}><LogOut className="h-4 w-4" /></Button>
           </nav>
@@ -730,17 +757,27 @@ function Dashboard() {
             {!demo && (
               <>
                 <ClientOnly fallback={null}>
-                  {() => (
-                    <Suspense fallback={null}>
-                      <ConnectHealthDeviceModal onSaved={handleManualSignalSaved} />
-                    </Suspense>
-                  )}
+                  <Suspense fallback={null}>
+                    <ConnectHealthDeviceModal onSaved={handleManualSignalSaved} />
+                  </Suspense>
                 </ClientOnly>
                 <ManualHealthSignalModal onSaved={handleManualSignalSaved} />
               </>
             )}
             {demo && (
-              <Button variant="outline" size="sm" onClick={() => setHealthSignals(getDemoHealthSignals())}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setHealthSignals(getDemoHealthSignals());
+                  trackActivityEvent({
+                    eventName: "demo_mode_started",
+                    page: "dashboard",
+                    feature: "health_signals",
+                    metadata: { source: "wearable_sample" }
+                  });
+                }}
+              >
                 <Activity className="mr-2 h-4 w-4" /> Use demo wearable sample
               </Button>
             )}

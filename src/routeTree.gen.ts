@@ -24,11 +24,13 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ChatIndexRouteImport } from './routes/chat.index'
 import { Route as ChatThreadIdRouteImport } from './routes/chat.$threadId'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
+import { Route as AdminActivityRouteImport } from './routes/admin/activity'
 import { Route as ApiWhoIcdSearchRouteImport } from './routes/api/who-icd/search'
 import { Route as ApiRxnormSearchRouteImport } from './routes/api/rxnorm/search'
 import { Route as ApiOpenfdaSearchRouteImport } from './routes/api/openfda/search'
 import { Route as ApiNutritionSearchRouteImport } from './routes/api/nutrition/search'
 import { Route as ApiEdamamImageFoodRouteImport } from './routes/api/edamam/image-food'
+import { Route as ApiActivityTrackRouteImport } from './routes/api/activity/track'
 
 const ShopsNearYouRoute = ShopsNearYouRouteImport.update({
   id: '/shops-near-you',
@@ -105,6 +107,11 @@ const ApiChatRoute = ApiChatRouteImport.update({
   path: '/api/chat',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminActivityRoute = AdminActivityRouteImport.update({
+  id: '/admin/activity',
+  path: '/admin/activity',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiWhoIcdSearchRoute = ApiWhoIcdSearchRouteImport.update({
   id: '/api/who-icd/search',
   path: '/api/who-icd/search',
@@ -130,6 +137,11 @@ const ApiEdamamImageFoodRoute = ApiEdamamImageFoodRouteImport.update({
   path: '/api/edamam/image-food',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiActivityTrackRoute = ApiActivityTrackRouteImport.update({
+  id: '/api/activity/track',
+  path: '/api/activity/track',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -144,9 +156,11 @@ export interface FileRoutesByFullPath {
   '/profile': typeof ProfileRoute
   '/report': typeof ReportRoute
   '/shops-near-you': typeof ShopsNearYouRoute
+  '/admin/activity': typeof AdminActivityRoute
   '/api/chat': typeof ApiChatRoute
   '/chat/$threadId': typeof ChatThreadIdRoute
   '/chat/': typeof ChatIndexRoute
+  '/api/activity/track': typeof ApiActivityTrackRoute
   '/api/edamam/image-food': typeof ApiEdamamImageFoodRoute
   '/api/nutrition/search': typeof ApiNutritionSearchRoute
   '/api/openfda/search': typeof ApiOpenfdaSearchRoute
@@ -165,9 +179,11 @@ export interface FileRoutesByTo {
   '/profile': typeof ProfileRoute
   '/report': typeof ReportRoute
   '/shops-near-you': typeof ShopsNearYouRoute
+  '/admin/activity': typeof AdminActivityRoute
   '/api/chat': typeof ApiChatRoute
   '/chat/$threadId': typeof ChatThreadIdRoute
   '/chat': typeof ChatIndexRoute
+  '/api/activity/track': typeof ApiActivityTrackRoute
   '/api/edamam/image-food': typeof ApiEdamamImageFoodRoute
   '/api/nutrition/search': typeof ApiNutritionSearchRoute
   '/api/openfda/search': typeof ApiOpenfdaSearchRoute
@@ -188,9 +204,11 @@ export interface FileRoutesById {
   '/profile': typeof ProfileRoute
   '/report': typeof ReportRoute
   '/shops-near-you': typeof ShopsNearYouRoute
+  '/admin/activity': typeof AdminActivityRoute
   '/api/chat': typeof ApiChatRoute
   '/chat/$threadId': typeof ChatThreadIdRoute
   '/chat/': typeof ChatIndexRoute
+  '/api/activity/track': typeof ApiActivityTrackRoute
   '/api/edamam/image-food': typeof ApiEdamamImageFoodRoute
   '/api/nutrition/search': typeof ApiNutritionSearchRoute
   '/api/openfda/search': typeof ApiOpenfdaSearchRoute
@@ -212,9 +230,11 @@ export interface FileRouteTypes {
     | '/profile'
     | '/report'
     | '/shops-near-you'
+    | '/admin/activity'
     | '/api/chat'
     | '/chat/$threadId'
     | '/chat/'
+    | '/api/activity/track'
     | '/api/edamam/image-food'
     | '/api/nutrition/search'
     | '/api/openfda/search'
@@ -233,9 +253,11 @@ export interface FileRouteTypes {
     | '/profile'
     | '/report'
     | '/shops-near-you'
+    | '/admin/activity'
     | '/api/chat'
     | '/chat/$threadId'
     | '/chat'
+    | '/api/activity/track'
     | '/api/edamam/image-food'
     | '/api/nutrition/search'
     | '/api/openfda/search'
@@ -255,9 +277,11 @@ export interface FileRouteTypes {
     | '/profile'
     | '/report'
     | '/shops-near-you'
+    | '/admin/activity'
     | '/api/chat'
     | '/chat/$threadId'
     | '/chat/'
+    | '/api/activity/track'
     | '/api/edamam/image-food'
     | '/api/nutrition/search'
     | '/api/openfda/search'
@@ -278,7 +302,9 @@ export interface RootRouteChildren {
   ProfileRoute: typeof ProfileRoute
   ReportRoute: typeof ReportRoute
   ShopsNearYouRoute: typeof ShopsNearYouRoute
+  AdminActivityRoute: typeof AdminActivityRoute
   ApiChatRoute: typeof ApiChatRoute
+  ApiActivityTrackRoute: typeof ApiActivityTrackRoute
   ApiEdamamImageFoodRoute: typeof ApiEdamamImageFoodRoute
   ApiNutritionSearchRoute: typeof ApiNutritionSearchRoute
   ApiOpenfdaSearchRoute: typeof ApiOpenfdaSearchRoute
@@ -393,6 +419,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiChatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/activity': {
+      id: '/admin/activity'
+      path: '/admin/activity'
+      fullPath: '/admin/activity'
+      preLoaderRoute: typeof AdminActivityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/who-icd/search': {
       id: '/api/who-icd/search'
       path: '/api/who-icd/search'
@@ -428,6 +461,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiEdamamImageFoodRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/activity/track': {
+      id: '/api/activity/track'
+      path: '/api/activity/track'
+      fullPath: '/api/activity/track'
+      preLoaderRoute: typeof ApiActivityTrackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -456,7 +496,9 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileRoute: ProfileRoute,
   ReportRoute: ReportRoute,
   ShopsNearYouRoute: ShopsNearYouRoute,
+  AdminActivityRoute: AdminActivityRoute,
   ApiChatRoute: ApiChatRoute,
+  ApiActivityTrackRoute: ApiActivityTrackRoute,
   ApiEdamamImageFoodRoute: ApiEdamamImageFoodRoute,
   ApiNutritionSearchRoute: ApiNutritionSearchRoute,
   ApiOpenfdaSearchRoute: ApiOpenfdaSearchRoute,

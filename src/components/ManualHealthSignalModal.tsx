@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { trackActivityEvent } from "@/lib/activity-tracking";
 import {
   Dialog,
   DialogContent,
@@ -18,6 +19,16 @@ export function ManualHealthSignalModal({ onSaved }: { onSaved?: () => void }) {
   const [open, setOpen] = useState(false);
   const [kind, setKind] = useState<HealthSignalKind>("steps");
   const [value, setValue] = useState("");
+
+  useEffect(() => {
+    if (open) {
+      trackActivityEvent({
+        eventName: "manual_signal_opened",
+        page: "dashboard",
+        feature: "health_signals"
+      });
+    }
+  }, [open]);
   
   const handleSave = () => {
     if (!value) {
