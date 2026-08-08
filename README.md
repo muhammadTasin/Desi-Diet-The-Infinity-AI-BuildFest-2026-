@@ -86,3 +86,20 @@ Tasfiq was the driving force behind the core architecture, backend systems, and 
 ## ⚠️ Medical Disclaimer
 
 Desi Digest provides general nutrition education and meal-tracking support. It is **not** a medical diagnosis tool, treatment plan, or replacement for a licensed physician or registered dietitian. Users with specific medical conditions should consult a qualified professional before making health decisions.
+---
+
+## Stage-4 vision model release
+
+Stage-4 adds a 27-class Bangladeshi food vision adapter built on [Qwen/Qwen3-VL-2B-Instruct](https://huggingface.co/Qwen/Qwen3-VL-2B-Instruct). The final LoRA/QLoRA adapter is [`models/stage4_27class`](./models/stage4_27class).
+
+| Metric | Result |
+| --- | ---: |
+| Overall validation accuracy | 90.86% |
+| Macro accuracy | 89.09% |
+| Existing 19-food accuracy | 90.42% |
+| PithaNet 8-class accuracy | 91.64% |
+| Held-out validation images | 996 |
+
+The final selected model is **checkpoint-645**. The repository includes only its ~18 MB inference adapter, reproducibility metadata, and aggregate results. It does not include raw food images, dataset archives, manifests, base-model weights, intermediate checkpoints, or training state.
+
+See [Stage-4 results](./docs/STAGE4_RESULTS.md), [reproduction notes](./docs/TRAINING_REPRODUCTION.md), and the [dataset and permission note](./docs/DATASET_AND_PERMISSION.md).
