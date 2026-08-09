@@ -7,6 +7,7 @@ import { type Profile, computeBMI, computeTDEE } from "@/lib/profile.functions";
 import { aggregateNutrition, enrichFoodsWithNutrition, type EnrichedFood } from "@/lib/nutrition-data.server";
 import { lookupEdamamImageFood } from "@/lib/external-api.server";
 import { analyzeImageWithGeminiVision, generatePlateAnalysisInsights } from "@/lib/ai-gateway.server";
+import { analyzeImageWithDeshiVision } from "@/lib/deshi-vision.server";
 import { analyzeImageWithOpenRouterVision } from "@/lib/openrouter-vision.server";
 import { routeAiCall } from "@/lib/ai-router.server";
 
@@ -43,7 +44,7 @@ export type PlateAnalysis = {
   nutritionEstimated: boolean;
   nutritionSources: string[];
   nutritionNote: string;
-  modelUsed: "edamam-image-food" | "gemini-vision-fallback" | "gemini-lite-vision-fallback" | "openrouter-vision-fallback" | "manual-entry" | "demo-sample" | "template-fallback";
+  modelUsed: "edamam-image-food" | "cp645-vision-fallback" | "gemini-vision-fallback" | "gemini-lite-vision-fallback" | "openrouter-vision-fallback" | "manual-entry" | "demo-sample" | "template-fallback";
   fallbackReason?: string;
   detectionUnavailable?: boolean;
   debugMessage?: string;
@@ -201,6 +202,7 @@ export const analyzePlate = createServerFn({ method: "POST" })
 
     let edamam: Awaited<ReturnType<typeof lookupEdamamImageFood>> | null = null;
     let gemini: Awaited<ReturnType<typeof analyzeImageWithGeminiVision>> | null = null;
+    let deshiVision: Awaited<ReturnType<typeof analyzeImageWithDeshiVision>> | null = null;
     let modelUsed: PlateAnalysis["modelUsed"] = "template-fallback";
     let detectedFoods: Array<{ name: string; portion?: string; confidence?: "high" | "medium" | "low"; note?: string }> = [];
     let detected = false;
@@ -253,32 +255,63 @@ export const analyzePlate = createServerFn({ method: "POST" })
           note: "Detected by Edamam; nutrition was calculated by local/USDA lookup.",
         }));
       } else {
-        // Fallback to Vision AI
-        console.info(`[image-analysis] external provider limited; using vision estimate`);
+        const shouldUseDeshiVision =
+          process.env.DESHI_VISION_ENABLED === "true" ||
+          Boolean(process.env.DESHI_VISION_API_URL?.trim());
 
-        const visionResult = await analyzeImageWithGeminiVision(imageBase64, mimeType!);
+        if (shouldUseDeshiVision) {
+          console.info(`[image-analysis] external provider limited; trying Deshi Digest vision classifier first`);
 
-        if (visionResult.detected && visionResult.foods.length) {
-          detected = true;
-          detectedFoods = visionResult.foods.slice(0, 5).map((food) => ({
-            name: food.name,
-            portion: "1 visible portion",
-            confidence: "medium",
-            note: `Detected by Vision AI; nutrition was calculated by local/USDA lookup.`,
-          }));
-          
-          if (visionResult.provider === 'gemini-flash') {
-            modelUsed = "gemini-vision-fallback";
-          } else if (visionResult.provider === 'gemini-lite') {
-            modelUsed = "gemini-lite-vision-fallback";
-          } else if (visionResult.provider === 'openrouter') {
-            modelUsed = "openrouter-vision-fallback";
+          deshiVision = await analyzeImageWithDeshiVision(imageBase64, mimeType!);
+
+          if (deshiVision.detected && deshiVision.foodName) {
+            detected = true;
+            modelUsed = "cp645-vision-fallback";
+            detectedFoods = [
+              {
+                name: deshiVision.foodName,
+                portion: "1 visible portion",
+                confidence: "high",
+                note: `Detected by Deshi Digest vision model (${deshiVision.foodId}); nutrition was calculated by local/USDA lookup.`,
+              },
+            ];
           } else {
-            modelUsed = "gemini-vision-fallback";
+            console.info(`[image-analysis] CP645 unavailable or unsupported; falling back to Gemini/OpenRouter vision`);
           }
-        } else {
-          fallbackReason = visionResult.fallbackReason || "Image food detection failed.";
-          errorCode = visionResult.fallbackReason;
+        }
+
+        if (!detectedFoods.length) {
+          // Fallback to Gemini/OpenRouter Vision AI
+          console.info(`[image-analysis] external provider limited; using Gemini/OpenRouter vision estimate`);
+
+          gemini = await analyzeImageWithGeminiVision(imageBase64, mimeType!);
+          const visionResult = gemini;
+
+          if (visionResult.detected && visionResult.foods.length) {
+            detected = true;
+            detectedFoods = visionResult.foods.slice(0, 5).map((food) => ({
+              name: food.name,
+              portion: "1 visible portion",
+              confidence: "medium",
+              note: `Detected by Vision AI; nutrition was calculated by local/USDA lookup.`,
+            }));
+
+            if (visionResult.provider === "gemini-flash") {
+              modelUsed = "gemini-vision-fallback";
+            } else if (visionResult.provider === "gemini-lite") {
+              modelUsed = "gemini-lite-vision-fallback";
+            } else if (visionResult.provider === "openrouter") {
+              modelUsed = "openrouter-vision-fallback";
+            } else {
+              modelUsed = "gemini-vision-fallback";
+            }
+          } else {
+            fallbackReason =
+              visionResult.fallbackReason ||
+              deshiVision?.error ||
+              "Image food detection failed.";
+            errorCode = visionResult.fallbackReason || deshiVision?.error;
+          }
         }
       }
     }
