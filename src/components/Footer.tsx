@@ -37,6 +37,9 @@ export function Footer() {
               <Link to="/docs" hash="tech-stack" className="text-sm text-foreground/75 transition-colors hover:text-primary">
                 Tech Stack
               </Link>
+              <Link to="/webmcp" className="text-sm font-semibold text-primary/90 transition-colors hover:text-primary flex items-center gap-1.5">
+                <span>Agent Mode (WebMCP)</span>
+              </Link>
             </nav>
           </div>
 

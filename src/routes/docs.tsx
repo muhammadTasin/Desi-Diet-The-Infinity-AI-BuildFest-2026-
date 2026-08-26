@@ -212,6 +212,12 @@ function DocsPage() {
                   Product Demo
                 </Button>
               </Link>
+              <Link to="/webmcp">
+                <Button variant="secondary" className="gap-2 border border-primary/20 text-primary">
+                  <Cpu className="h-4 w-4" />
+                  Agent Mode (WebMCP)
+                </Button>
+              </Link>
               <a href="#architecture">
                 <Button variant="outline" className="gap-2">
                   <Network className="h-4 w-4" />

@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WebmcpRouteImport } from './routes/webmcp'
 import { Route as ShopsNearYouRouteImport } from './routes/shops-near-you'
 import { Route as ReportRouteImport } from './routes/report'
 import { Route as ProfileRouteImport } from './routes/profile'
@@ -30,6 +31,11 @@ import { Route as ApiOpenfdaSearchRouteImport } from './routes/api/openfda/searc
 import { Route as ApiNutritionSearchRouteImport } from './routes/api/nutrition/search'
 import { Route as ApiEdamamImageFoodRouteImport } from './routes/api/edamam/image-food'
 
+const WebmcpRoute = WebmcpRouteImport.update({
+  id: '/webmcp',
+  path: '/webmcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ShopsNearYouRoute = ShopsNearYouRouteImport.update({
   id: '/shops-near-you',
   path: '/shops-near-you',
@@ -144,6 +150,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof ProfileRoute
   '/report': typeof ReportRoute
   '/shops-near-you': typeof ShopsNearYouRoute
+  '/webmcp': typeof WebmcpRoute
   '/api/chat': typeof ApiChatRoute
   '/chat/$threadId': typeof ChatThreadIdRoute
   '/chat/': typeof ChatIndexRoute
@@ -165,6 +172,7 @@ export interface FileRoutesByTo {
   '/profile': typeof ProfileRoute
   '/report': typeof ReportRoute
   '/shops-near-you': typeof ShopsNearYouRoute
+  '/webmcp': typeof WebmcpRoute
   '/api/chat': typeof ApiChatRoute
   '/chat/$threadId': typeof ChatThreadIdRoute
   '/chat': typeof ChatIndexRoute
@@ -188,6 +196,7 @@ export interface FileRoutesById {
   '/profile': typeof ProfileRoute
   '/report': typeof ReportRoute
   '/shops-near-you': typeof ShopsNearYouRoute
+  '/webmcp': typeof WebmcpRoute
   '/api/chat': typeof ApiChatRoute
   '/chat/$threadId': typeof ChatThreadIdRoute
   '/chat/': typeof ChatIndexRoute
@@ -212,6 +221,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/report'
     | '/shops-near-you'
+    | '/webmcp'
     | '/api/chat'
     | '/chat/$threadId'
     | '/chat/'
@@ -233,6 +243,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/report'
     | '/shops-near-you'
+    | '/webmcp'
     | '/api/chat'
     | '/chat/$threadId'
     | '/chat'
@@ -255,6 +266,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/report'
     | '/shops-near-you'
+    | '/webmcp'
     | '/api/chat'
     | '/chat/$threadId'
     | '/chat/'
@@ -278,6 +290,7 @@ export interface RootRouteChildren {
   ProfileRoute: typeof ProfileRoute
   ReportRoute: typeof ReportRoute
   ShopsNearYouRoute: typeof ShopsNearYouRoute
+  WebmcpRoute: typeof WebmcpRoute
   ApiChatRoute: typeof ApiChatRoute
   ApiEdamamImageFoodRoute: typeof ApiEdamamImageFoodRoute
   ApiNutritionSearchRoute: typeof ApiNutritionSearchRoute
@@ -288,6 +301,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/webmcp': {
+      id: '/webmcp'
+      path: '/webmcp'
+      fullPath: '/webmcp'
+      preLoaderRoute: typeof WebmcpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/shops-near-you': {
       id: '/shops-near-you'
       path: '/shops-near-you'
@@ -456,6 +476,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileRoute: ProfileRoute,
   ReportRoute: ReportRoute,
   ShopsNearYouRoute: ShopsNearYouRoute,
+  WebmcpRoute: WebmcpRoute,
   ApiChatRoute: ApiChatRoute,
   ApiEdamamImageFoodRoute: ApiEdamamImageFoodRoute,
   ApiNutritionSearchRoute: ApiNutritionSearchRoute,
